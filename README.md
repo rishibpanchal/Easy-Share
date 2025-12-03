@@ -1,6 +1,6 @@
-# FileShare — Minimal Flask file & text sharing
+# EasyShare — Minimal Flask file & text sharing
 
-FileShare is a small, single-file Flask application that creates short room codes so users can upload files and share text snippets within short-lived rooms. It is intentionally lightweight and suitable for quick demos, local sharing, or as a starting point for a more feature-rich service.
+EasyShare is a small, single-file Flask application that creates short room codes so users can upload files and share text snippets within short-lived rooms. It is intentionally lightweight and suitable for quick demos, local sharing, or as a starting point for a more feature-rich service.
 
 **Key features**
 - Simple room-based sharing with short room codes
