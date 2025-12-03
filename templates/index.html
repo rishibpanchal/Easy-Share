@@ -1,0 +1,73 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en" class="transition-colors duration-300">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FileShare | Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
+  <style>
+    html {
+      transition: background-color 0.5s ease, color 0.5s ease;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-pink-100 to-yellow-200 dark:from-gray-900 dark:to-gray-800 min-h-screen flex items-center justify-center">
+  <div class="bg-white dark:bg-gray-900 shadow-2xl rounded-3xl p-10 w-full max-w-md text-center space-y-6 transition-all">
+    <h1 class="text-4xl font-extrabold text-gray-800 dark:text-white">🔗 FileShare</h1>
+    <button onclick="createRoom()" class="w-full bg-pink-600 text-white py-2 rounded-xl hover:bg-pink-700 transition text-lg font-medium">Create Room</button>
+    <div class="text-gray-400">or</div>
+    <input id="roomInput" type="text" placeholder="Enter Room Code" class="w-full border border-gray-300 dark:border-gray-700 p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white">
+    <button onclick="joinRoom()" class="w-full bg-purple-600 text-white py-2 rounded-xl hover:bg-purple-700 transition text-lg font-medium">Join Room</button>
+
+    <div class="pt-4">
+      <label class="text-gray-600 dark:text-gray-300 font-medium">Theme:</label>
+      <select id="themeToggle" class="ml-2 rounded-lg px-2 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white">
+        <option value="system">System</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </div>
+  </div>
+
+  <script>
+    function createRoom() {
+      fetch('/create-room', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => window.location.href = `/room/${data.room_code}`);
+    }
+
+    function joinRoom() {
+      const code = document.getElementById('roomInput').value.trim();
+      if (code) window.location.href = `/room/${code}`;
+    }
+
+    const themeSelect = document.getElementById('themeToggle');
+    const root = document.documentElement;
+
+    function applyTheme(mode) {
+      if (mode === 'dark') root.classList.add('dark');
+      else if (mode === 'light') root.classList.remove('dark');
+      else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        prefersDark ? root.classList.add('dark') : root.classList.remove('dark');
+      }
+    }
+
+    themeSelect.addEventListener('change', () => {
+      const mode = themeSelect.value;
+      localStorage.setItem('theme', mode);
+      applyTheme(mode);
+    });
+
+    const saved = localStorage.getItem('theme') || 'system';
+    themeSelect.value = saved;
+    applyTheme(saved);
+  </script>
+</body>
+</html>

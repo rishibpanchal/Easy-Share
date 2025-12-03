@@ -1,0 +1,134 @@
+<!-- templates/room.html -->
+<!DOCTYPE html>
+<html lang="en" class="transition-colors duration-300">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Room {{ code }} | FileShare</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    html {
+      font-family: 'Inter', sans-serif;
+    }
+    @keyframes fadeSlideUp {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+      animation: fadeSlideUp 0.4s ease forwards;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-gray-900 dark:to-gray-800 min-h-screen text-gray-800 dark:text-white transition-all">
+  <div class="max-w-4xl mx-auto py-10 px-4 animate-in">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-3xl font-bold">Room: <span class="text-indigo-600 dark:text-yellow-400">{{ code }}</span></h2>
+      <button onclick="window.location.href='/'" class="text-gray-500 hover:text-indigo-600 dark:hover:text-yellow-400 transition">← Back</button>
+    </div>
+
+    <div id="dropZone" class="border-2 border-dashed border-indigo-400 bg-white/60 dark:bg-white/10 p-10 rounded-xl text-center cursor-pointer transition hover:shadow-xl">
+      <p class="text-lg font-semibold">📤 Drag & drop or click to upload files</p>
+      <input id="fileInput" type="file" multiple class="hidden">
+    </div>
+
+    <div class="mt-8 space-y-4">
+      <h3 class="text-xl font-semibold">📂 Uploaded Files</h3>
+      <ul id="fileList" class="space-y-3"></ul>
+    </div>
+
+    <div class="mt-10 space-y-3">
+      <h3 class="text-xl font-semibold">💬 Shared Note</h3>
+      <textarea id="sharedText" placeholder="Write something to share..." class="w-full h-40 p-4 rounded-xl border border-indigo-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:focus:ring-yellow-400 resize-none"></textarea>
+      <div class="text-right">
+        <button onclick="saveText()" class="bg-indigo-600 text-white py-2 px-6 rounded-xl hover:bg-indigo-700 transition dark:bg-yellow-500 dark:hover:bg-yellow-600">Save Text</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    const sharedText = document.getElementById('sharedText');
+    const roomCode = '{{ code }}';
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('ring-4', 'ring-indigo-300');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('ring-4', 'ring-indigo-300'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('ring-4', 'ring-indigo-300');
+      handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+    function handleFiles(files) {
+      const formData = new FormData();
+      for (const file of files) {
+        formData.append('files', file);
+      }
+      fetch(`/upload/${roomCode}`, {
+        method: 'POST',
+        body: formData
+      }).then(() => {
+        loadFiles();
+        toast("Upload successful ✅");
+      }).catch(() => {
+        toast("Upload failed ❌");
+      });
+    }
+
+    function loadFiles() {
+      fetch(`/files/${roomCode}`)
+        .then(res => res.json())
+        .then(files => {
+          fileList.innerHTML = '';
+          files.forEach((file, i) => {
+            const li = document.createElement('li');
+            li.className = 'flex justify-between items-center bg-indigo-100 dark:bg-gray-700 rounded-xl px-4 py-2 text-indigo-900 dark:text-white shadow-sm';
+            li.innerHTML = `
+              <span class="truncate">📄 ${file}</span>
+              <a href="/download/${roomCode}/${file}" class="text-indigo-600 dark:text-yellow-400 underline hover:opacity-75 transition">Download</a>
+            `;
+            fileList.appendChild(li);
+          });
+        });
+    }
+
+    function loadText() {
+      fetch(`/text/${roomCode}`)
+        .then(res => res.json())
+        .then(data => sharedText.value = data.content);
+    }
+
+    function saveText() {
+      const content = sharedText.value;
+      fetch(`/text/${roomCode}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      }).then(() => toast("Text saved 📝"));
+    }
+
+    function toast(msg) {
+      const t = document.createElement('div');
+      t.textContent = msg;
+      t.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-indigo-600 dark:bg-yellow-500 text-white dark:text-black px-4 py-2 rounded-xl shadow-xl animate-in';
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    }
+
+    loadFiles();
+    loadText();
+  </script>
+</body>
+</html>
